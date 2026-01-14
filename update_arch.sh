@@ -38,4 +38,3 @@ if [[ "$REBOOT" == "y" || "$REBOOT" == "Y" ]]; then
     echo -e "[$(date '+%d-%m-%Y %H:%M')] System updated and successfully cleaned.\n" >> "$LOGFILE"
     sudo reboot
     fi
-    
