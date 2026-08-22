@@ -36,7 +36,7 @@ mkdir -p "$STATE_DIR" "$LOG_BASE_DIR" 2>/dev/null
 # --- dependências mínimas ----------------------------------------------------
 guardian::check_deps() {
     local missing=()
-    for c in pacman ss systemctl journalctl find stat awk comm diff; do
+    for c in pacman ss systemctl journalctl find stat awk comm diff ping curl; do
         command -v "$c" &>/dev/null || missing+=("$c")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
@@ -61,7 +61,7 @@ guardian::pause() { read -rp "Pressione ENTER para continuar..." _; }
 guardian::header() {
     clear
     echo -e "${C_BOLD}${C_CYAN}╔═══════════════════════════════════════════════════════════════════════╗${C_RESET}"
-    echo -e "${C_BOLD}${C_CYAN}║                              ARCH UPDATE                              ║${C_RESET}"
+    echo -e "${C_BOLD}${C_CYAN}║                       SECURE UPDATE ARCH LINUX                        ║${C_RESET}"
     echo -e "${C_BOLD}${C_CYAN}║             Agente de segurança e atualização de pacotes              ║${C_RESET}"
     echo -e "${C_BOLD}${C_CYAN}╚═══════════════════════════════════════════════════════════════════════╝${C_RESET}"
     echo -e "  Host: $(hostname)   Kernel: $(uname -r)   $(date '+%d/%m/%Y %H:%M:%S')"
@@ -281,6 +281,11 @@ guardian::action_aur_update() {
     guardian::execute_update "Atualização AUR" pkg::action_aur_update
 }
 
+guardian::action_blackarch_update() {
+    guardian::header
+    guardian::execute_update "Atualização BlackArch" pkg::action_blackarch_update
+}
+
 guardian::action_list_updates() {
     guardian::header
     echo -e "${C_BOLD}${C_CYAN}-- Pacotes disponíveis para atualização --${C_RESET}"
@@ -298,14 +303,15 @@ guardian::action_list_updates() {
 # --- menu principal -------------------------------------------------------
 guardian::main_menu() {
     local -a labels=(
-        "Atualização completa do sistema (pacman -Syu)"
-        "Atualizar apenas repositórios oficiais (pacman)"
+        "Atualização completa do sistema"
+        "Atualizar apenas repositórios oficiais"
         "Atualizar apenas pacotes AUR"
+        "Atualizar apenas pacotes BlackArch"
         "Ver pacotes disponíveis para atualização"
-        "Tipos de pacotes (explícitos/deps/órfãos/grupos)"
+        "Tipos de pacotes"
         "Informações do kernel"
         "Ver log da última atualização"
-        "BTRFS / Snapper (somente leitura)"
+        "BTRFS / Snapper"
         "Verificar integridade de pacotes/configs"
         "Sair"
     )
@@ -317,7 +323,7 @@ guardian::main_menu() {
         # No menu principal, ← e q têm o mesmo efeito: sair do programa.
         if [[ $rc -eq 1 || $rc -eq 2 ]]; then
             tput cnorm 2>/dev/null
-            echo "Bye."
+            echo "Até mais."
             exit 0
         fi
 
@@ -325,13 +331,14 @@ guardian::main_menu() {
             0) guardian::action_full_update ;;
             1) guardian::action_sync_official ;;
             2) guardian::action_aur_update ;;
-            3) guardian::action_list_updates ;;
-            4) pkg::types_menu ;;
-            5) pkg::kernel_info ;;
-            6) guardian::view_last_log ;;
-            7) btrfs::menu ;;
-            8) integ::menu ;;
-            9) tput cnorm 2>/dev/null; echo "Bye!"; exit 0 ;;
+            3) guardian::action_blackarch_update ;;
+            4) guardian::action_list_updates ;;
+            5) pkg::types_menu ;;
+            6) pkg::kernel_info ;;
+            7) guardian::view_last_log ;;
+            8) btrfs::menu ;;
+            9) integ::menu ;;
+            10) tput cnorm 2>/dev/null; echo "Bye."; exit 0 ;;
         esac
     done
 }

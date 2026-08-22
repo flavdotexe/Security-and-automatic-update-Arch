@@ -1,11 +1,8 @@
-# arch-guardian
+# secure-update-arch
 
 Agente interativo de segurança e atualização de pacotes para Arch Linux.
 
-Este projeto substitui o antigo `security-update-arch`. Em vez de um script
-que só chama `sudo pacman -Syyu`, o **arch-guardian** oferece um menu
-interativo com controle fino sobre o que é atualizado, e gera um relatório
-comparando o estado do sistema **antes e depois** de cada atualização.
+o **secure-update-arch** oferece um menu interativo com controle fino sobre o que é atualizado, e gera um relatório comparando o estado do sistema **antes e depois** de cada atualização.
 
 > O [snapper](https://wiki.archlinux.org/title/Snapper) continua fazendo o
 > que sempre fez: o arch-guardian **não gerencia snapshots**, não cria, não
@@ -48,7 +45,7 @@ Dependências (a maioria já vem em qualquer instalação padrão de Arch Linux)
 Rode diretamente do diretório clonado:
 
 ```bash
-./guardian.sh
+./secuparch.sh
 ```
 
 Ou instale em `/opt` para rodar de qualquer lugar:
@@ -82,7 +79,6 @@ Ao abrir, o `guardian.sh` mostra uma tabela de status logo abaixo do menu:
 - Total de atualizações pendentes
 - Pacotes órfãos
 - Serviços systemd **ativos** cujo pacote tem atualização pendente
-- Serviços em estado `FAILED`
 - Arquivos de configuração modificados localmente em pacotes com
   atualização pendente
 - Arquivos `.pacnew` / `.pacsave` existentes em `/etc`
@@ -91,20 +87,40 @@ Ao abrir, o `guardian.sh` mostra uma tabela de status logo abaixo do menu:
 
 Depois vem o menu:
 
+A navegação é feita com `↑`/`↓` (ou `k`/`j`), `→`/Enter seleciona, `←` volta
+e `q` sai (no menu principal) ou volta (nos submenus).
+
 | Opção | Ação |
 |---|---|
-| 1 | Atualização completa do sistema (`pacman -Syu`) |
-| 2 | Atualizar apenas repositórios oficiais |
-| 3 | Atualizar apenas pacotes AUR (via `yay`/`paru`) |
-| 4 | Ver pacotes disponíveis para atualização |
-| 5 | Tipos de pacotes (explícitos, dependências, órfãos, grupos, estrangeiros) |
-| 6 | Informações do kernel (versão em execução vs. instalada, imagens em `/boot`) |
-| 7 | Ver log da última atualização |
-| 8 | BTRFS / Snapper (somente leitura) |
-| 9 | Verificar integridade de pacotes/configs |
-| 0 | Sair |
+| Atualização completa do sistema | `pacman -Syu` |
+| Atualizar apenas repositórios oficiais | atualiza só os pacotes dos repos oficiais |
+| Atualizar apenas pacotes AUR | via `yay`/`paru` |
+| Atualizar apenas pacotes BlackArch | atualiza só pacotes do repositório BlackArch (se configurado) |
+| Ver pacotes disponíveis para atualização | lista sem aplicar nada |
+| Tipos de pacotes | explícitos, dependências, órfãos, grupos, estrangeiros |
+| Informações do kernel | versão em execução vs. instalada, imagens em `/boot` |
+| Ver log da última atualização | abre o relatório mais recente |
+| BTRFS / Snapper | somente leitura |
+| Verificar integridade de pacotes/configs | ver seção abaixo |
+| Sair | encerra o programa |
 
+<<<<<<< HEAD
 Toda vez que você atualiza pelas opções 1, 2 ou 3, o secuparch:
+=======
+O submenu **Verificar integridade de pacotes/configs** reúne:
+
+- Checagem completa (`pacman -Qkk`)
+- Configs modificados em pacotes com atualização pendente
+- Varredura de `.pacnew`/`.pacsave` em `/etc`
+- **Teste de conectividade (ping)** — testa a conexão (padrão: `github.com`,
+  configurável em `PING_HOST`) e avisa se a internet está estável o
+  suficiente pra valer a pena atualizar agora
+- **Conferência de mirrors do pacman** — testa (via `curl`) os primeiros
+  mirrors da `mirrorlist` e mostra quais estão respondendo
+
+Toda vez que você atualiza pelas opções de atualização completa, oficial,
+AUR ou BlackArch, o guardian:
+>>>>>>> b9d53e8 (update/add mirror status, ping test and others repo)
 
 1. Tira uma "foto" do sistema **antes** (rede, serviços, pacotes,
    `.pacnew`, BTRFS)
@@ -150,9 +166,16 @@ COLOR_OUTPUT=true
 JOURNAL_ERROR_PRIORITY=3
 BTRFS_ENABLED="auto"   # auto | true | false
 SNAPPER_CONFIG="root"
+PING_HOST="github.com"                       # usado no teste de conectividade
+MIRRORLIST_PATH="/etc/pacman.d/mirrorlist"    # usado na conferência de mirrors
+MIRROR_CHECK_LIMIT=10
 ```
 
+<<<<<<< HEAD
 ## Licença de uso livre
+=======
+BlackArch não tem variável de configuração — a detecção é automática
+(checa se o repositório `blackarch` está presente em `/etc/pacman.conf`).
 
 Uso pessoal, sem garantias. Ajuste os caminhos em `guardian.conf` antes de
 usar em outra máquina.

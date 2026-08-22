@@ -42,24 +42,7 @@ integ::pacnew_scan() {
 }
 
 integ::pacnew_count() {
-    find /etc -type f \( -name '*.pacnew' -o -name '*.pacsave' \) \
-        -print 2>/dev/null | wc -l
-}
-
-integ::pacnew_size() {
-    local bytes=0
-    local file
-    local size
-
-    while IFS= read -r -d '' file; do
-        size="$(stat -c '%s' "$file" 2>/dev/null || echo 0)"
-        bytes=$((bytes + size))
-    done < <(
-        find /etc -type f \( -name '*.pacnew' -o -name '*.pacsave' \) \
-            -print0 2>/dev/null
-    )
-
-    numfmt --to=iec --suffix=B "$bytes" 2>/dev/null || printf '%sB\n' "$bytes"
+    integ::pacnew_scan | grep -c .
 }
 
 # --- Snapshot para o relatório ------------------------------------------------
@@ -93,6 +76,8 @@ integ::menu() {
         "Checagem completa (pacman -Qkk) - pode ser lento"
         "Configs modificados em pacotes com atualização pendente"
         "Varredura de .pacnew / .pacsave em /etc"
+        "Teste de conectividade (ping)"
+        "Conferência de mirrors do pacman"
     )
 
     while true; do
@@ -114,6 +99,16 @@ integ::menu() {
                 out="$(integ::pacnew_scan)"
                 guardian::header
                 [[ -z "$out" ]] && echo "Nenhum .pacnew/.pacsave encontrado." || echo "$out"
+                guardian::pause
+                ;;
+            3)
+                guardian::header
+                net::ping_test
+                guardian::pause
+                ;;
+            4)
+                guardian::header
+                net::mirrors_check
                 guardian::pause
                 ;;
         esac

@@ -133,6 +133,42 @@ pkg::action_aur_update() {
     "$helper" -Sua
 }
 
+# --- BlackArch -----------------------------------------------------------
+# BlackArch é um repositório adicional (não é AUR): precisa estar
+# configurado em /etc/pacman.conf. Aqui só atualizamos pacotes que
+# pertencem a esse repositório, deixando o resto do sistema intocado.
+pkg::blackarch_available() {
+    pacman -Sl blackarch &>/dev/null
+}
+
+pkg::action_blackarch_update() {
+    if ! pkg::blackarch_available; then
+        echo -e "${C_RED}Repositório BlackArch não encontrado em /etc/pacman.conf.${C_RESET}"
+        echo "Configure-o antes de usar esta opção (ver strap.sh do BlackArch)."
+        return 1
+    fi
+
+    sudo pacman -Sy || return 1
+
+    local pending blackarch_pkgs
+    pending="$(pacman -Qu 2>/dev/null | awk '{print $1}')"
+    blackarch_pkgs="$(pacman -Sl blackarch 2>/dev/null | awk '{print $2}')"
+
+    local -a to_update=()
+    while IFS= read -r p; do
+        [[ -z "$p" ]] && continue
+        grep -qx "$p" <<<"$blackarch_pkgs" && to_update+=("$p")
+    done <<<"$pending"
+
+    if [[ ${#to_update[@]} -eq 0 ]]; then
+        echo -e "${C_GREEN}Nenhum pacote do BlackArch pendente de atualização.${C_RESET}"
+        return 0
+    fi
+
+    echo "Pacotes do BlackArch a atualizar: ${to_update[*]}"
+    sudo pacman -S "${to_update[@]}"
+}
+
 # --- Snapshot de estado para o relatório --------------------------------------
 pkg::snapshot() {
     local tag="$1"
