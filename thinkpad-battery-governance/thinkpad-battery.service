@@ -1,0 +1,12 @@
+[Unit]
+Description=Coleta uma amostra do estado da bateria do ThinkPad para o historico
+After=multi-user.target
+
+[Service]
+Type=oneshot
+# Ajuste o caminho abaixo para onde o projeto estiver instalado, ex:
+# /opt/thinkpad-battery-governance ou /home/USUARIO/thinkpad-battery-governance
+ExecStart=/home/fl4v1c0r3/.local/bin/battery-control
+
+[Install]
+WantedBy=multi-user.target

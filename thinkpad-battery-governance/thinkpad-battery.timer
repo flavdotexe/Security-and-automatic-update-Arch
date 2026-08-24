@@ -1,0 +1,11 @@
+[Unit]
+Description=Roda a coleta de historico da bateria do ThinkPad periodicamente
+
+[Timer]
+# Primeira execucao 2 min apos o boot, depois a cada 10 minutos.
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
