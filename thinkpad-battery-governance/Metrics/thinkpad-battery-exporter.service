@@ -1,0 +1,12 @@
+[Unit]
+Description=Exporta metricas da bateria do ThinkPad para o node_exporter (textfile collector)
+After=network.target
+
+[Service]
+Type=oneshot
+Environment=PROM_TEXTFILE_DIR=/var/lib/node_exporter/textfile_collector
+# Ajuste o caminho abaixo para onde o projeto estiver instalado.
+ExecStart=/opt/thinkpad-battery-governance/Metrics/thinkpad-battery-exporter.sh
+
+[Install]
+WantedBy=multi-user.target

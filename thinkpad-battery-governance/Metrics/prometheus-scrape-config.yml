@@ -1,0 +1,14 @@
+# Trecho de exemplo para adicionar ao prometheus.yml existente.
+# Não substitui a sua config, é só o job desse host.
+#
+# O node_exporter precisa estar rodando com:
+#   --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+# (o mesmo diretório usado em PROM_TEXTFILE_DIR no thinkpad-battery-exporter.sh)
+
+scrape_configs:
+  - job_name: "thinkpad_battery"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["localhost:9100"]
+        labels:
+          instance: "thinkpad"
