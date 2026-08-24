@@ -1,0 +1,16 @@
+[Unit]
+Description=ThinkPad T495 Fan Control
+After=systemd-modules-load.service
+Wants=systemd-modules-load.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/t495-fan-control.sh
+Restart=always
+RestartSec=2
+
+# O script precisa de privilégios de root para controlar o EC
+User=root
+
+[Install]
+WantedBy=multi-user.target
