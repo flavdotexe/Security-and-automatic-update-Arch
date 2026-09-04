@@ -71,4 +71,5 @@ done
     done
 } > "$TMP_FILE"
 
+chmod 644 "$TMP_FILE"
 mv "$TMP_FILE" "$OUTPUT_FILE"
