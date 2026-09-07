@@ -1,6 +1,0 @@
-[Unit]
-Description=Coleta dual channel e zram para o Prometheus
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/memory-monitor.sh

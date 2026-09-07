@@ -1,6 +1,0 @@
-[Unit]
-Description=Coleta status de RAID (mdadm) para o Prometheus
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/raid-monitor.sh

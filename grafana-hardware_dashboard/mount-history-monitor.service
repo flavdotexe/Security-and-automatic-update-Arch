@@ -1,6 +1,0 @@
-[Unit]
-Description=Detecta montagens/desmontagens de dispositivos para o Prometheus
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/mount-history-monitor.sh

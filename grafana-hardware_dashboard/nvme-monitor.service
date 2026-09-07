@@ -1,6 +1,0 @@
-[Unit]
-Description=Coleta saude SMART e temperatura do NVMe para o Prometheus
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/nvme-monitor.sh
