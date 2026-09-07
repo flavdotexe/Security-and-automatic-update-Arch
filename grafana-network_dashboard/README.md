@@ -1,46 +1,22 @@
-# Supervisório de Rede — Arch Linux
+# Network Supervisor
 
-Pacote com dashboard Grafana + coletores Prometheus para:
-- Tentativas de brute force / possível DDoS no SSH (+ sessões SSH ativas)
-- Governança de dispositivos: **hotspot**, **redes virtuais** (bridge/libvirt/docker) e **SSH**, todos com IP
-- Consumo de banda (GB download/upload) — resumo e gráficos
+Package with Grafana dashboard + Prometheus collectors for:
+- Brute force attempts / possible DDoS on SSH (+ active SSH sessions)
+- Device governance: **hotspot**, **virtual networks** (bridge/libvirt/docker) and **SSH**, all with IP
+- Bandwidth consumption (GB download/upload) — summary and charts
 
-## O que mudou nesta versão
-
-1. **Correção do `ssh-monitor.sh`**: o array associativo `failed_by_ip` era
-   incrementado com `${arr["$ip"]:-0}`, que só resolve um valor padrão na
-   *leitura* — a chave nunca era criada antes disso. Sob `set -u` isso é
-   frágil. Agora cada chave é inicializada explicitamente com
-   `: "${arr[$k]:=0}"` (atribuição, não só leitura) antes de qualquer
-   incremento. O mesmo padrão foi aplicado em `virtual-networks-monitor.sh`
-   e no controle de sessões SSH.
-2. **IP garantido em todos os dispositivos do hotspot**: `hotspot-monitor.sh`
-   agora tenta primeiro o lease do dnsmasq e, se não encontrar, cai para a
-   tabela ARP/vizinhos da interface (`ip neigh`) — então praticamente todo
-   dispositivo conectado aparece com IP.
-3. **Novo script `virtual-networks-monitor.sh`**: lista dispositivos em
-   bridges genéricas (`virbr0`, `docker0`, `br-*`, etc. via `ip neigh`),
-   em redes libvirt/QEMU (via `virsh net-dhcp-leases`, com hostname) e em
-   redes Docker (via `docker inspect`). Cada fonte é opcional — o script
-   não falha se `virsh`/`docker` não estiverem instalados.
-4. **Novo bloco no `ssh-monitor.sh`**: sessões SSH autenticadas e ativas
-   agora aparecem com usuário, IP de origem e TTY (via `who`).
-5. **Dashboard**: nova seção "🌐 Governança de Dispositivos" reunindo as
-   três fontes (hotspot / redes virtuais / SSH) em stats + tabelas lado a
-   lado, além de um gráfico histórico combinando as três.
-
-## 1. Pré-requisitos (pacman)
+## 1. Prerequisites (pacman)
 
 ```bash
 sudo pacman -S prometheus node_exporter grafana iw
-# opcional, recomendado:
+# optional, recommended:
 sudo pacman -S fail2ban
-# opcional, só se você usa essas tecnologias:
-sudo pacman -S libvirt        # para virsh
-# docker via AUR/repos oficiais, se usar containers
+# optional, only if you use these technologies:
+sudo pacman -S libvirt        # for virsh
+# docker via AUR/official repos, if you use containers
 ```
 
-## 2. Habilitar o textfile collector no node_exporter
+## 2. Enable the textfile collector on node_exporter
 
 ```bash
 sudo mkdir -p /var/lib/node_exporter/textfile_collector
@@ -51,7 +27,7 @@ sudo chown node_exporter:node_exporter /var/lib/node_exporter/textfile_collector
 sudo systemctl edit node_exporter
 ```
 
-Adicione:
+Add:
 ```ini
 [Service]
 ExecStart=
@@ -63,7 +39,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart node_exporter
 ```
 
-## 3. Instalar os scripts coletores
+## 3. Install the collector scripts
 
 ```bash
 sudo install -Dm755 ssh-monitor.sh /usr/local/bin/ssh-monitor.sh
@@ -71,8 +47,8 @@ sudo install -Dm755 hotspot-monitor.sh /usr/local/bin/hotspot-monitor.sh
 sudo install -Dm755 virtual-networks-monitor.sh /usr/local/bin/virtual-networks-monitor.sh
 ```
 
-Edite `hotspot-monitor.service` e troque `wlan0` pela interface real do seu
-hotspot (confira com `iw dev` ou `nmcli device`).
+Edit `hotspot-monitor.service` and replace `wlan0` with the actual
+interface of your hotspot (check with `iw dev` or `nmcli device`).
 
 ```bash
 sudo cp ssh-monitor.service ssh-monitor.timer /etc/systemd/system/
@@ -82,7 +58,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now ssh-monitor.timer hotspot-monitor.timer virtual-networks-monitor.timer
 ```
 
-Teste manualmente:
+Test manually:
 ```bash
 sudo /usr/local/bin/ssh-monitor.sh
 sudo /usr/local/bin/hotspot-monitor.sh wlan0
@@ -90,16 +66,16 @@ sudo /usr/local/bin/virtual-networks-monitor.sh
 cat /var/lib/node_exporter/textfile_collector/*.prom
 ```
 
-> **Nota sobre o sshd**: os scripts leem `journalctl -u sshd`. Se seu sshd
-> aparece em outro unit no seu sistema (ex.: `sshd@.service` com socket
-> activation), ajuste o `-u sshd` no script.
+> **Note about sshd**: the scripts read `journalctl -u sshd`. If your sshd
+> appears under a different unit on your system (e.g., `sshd@.service` with
+> socket activation), adjust the `-u sshd` in the script.
 >
-> **Nota sobre permissões**: os timers rodam como root por padrão, o que é
-> necessário para `iw dev` (station dump), `virsh` e `docker inspect`.
+> **Note about permissions**: the timers run as root by default, which is
+> necessary for `iw dev` (station dump), `virsh` and `docker inspect`.
 
-## 4. Configurar o Prometheus
+## 4. Configure Prometheus
 
-Em `/etc/prometheus/prometheus.yml`:
+In `/etc/prometheus/prometheus.yml`:
 
 ```yaml
 scrape_configs:
@@ -114,39 +90,39 @@ sudo systemctl enable --now prometheus
 sudo systemctl restart prometheus
 ```
 
-## 5. Importar o dashboard no Grafana
+## 5. Import the dashboard into Grafana
 
-1. **Connections → Data sources** → adicione o Prometheus (`http://localhost:9090`).
-2. **Dashboards → Import** → upload de `arch-network-supervisorio.json`.
-3. Selecione seu datasource Prometheus quando solicitado.
-4. No topo do dashboard: escolha a variável **interface** (para os painéis
-   de GB) e, opcionalmente, filtre **Rede virtual** (`vnet`) para focar em
-   uma bridge/rede específica nas tabelas de governança.
+1. **Connections → Data sources** → add Prometheus (`http://localhost:9090`).
+2. **Dashboards → Import** → upload `arch-network-supervisorio.json`.
+3. Select your Prometheus datasource when prompted.
+4. At the top of the dashboard: choose the **interface** variable (for the
+   GB panels) and, optionally, filter **Virtual network** (`vnet`) to focus
+   on a specific bridge/network in the governance tables.
 
-## O que cada seção mostra
+## What each section shows
 
-| Seção | Painéis |
+| Section | Panels |
 |---|---|
-| 🔒 Segurança SSH | tentativas falhas, IPs únicos atacantes, conexões na porta 22 (DDoS/scan), IPs banidos (fail2ban), gráfico ao longo do tempo, tabela top 10 IPs |
-| 🌐 Governança de Dispositivos | contagem hotspot / redes virtuais / sessões SSH ativas, tabela hotspot (MAC/IP/hostname), tabela redes virtuais (rede/IP/MAC/hostname/origem), tabela sessões SSH (usuário/IP/TTY), histórico combinado |
-| 💾 Consumo (GB) | download/upload total nas últimas 24h, gauges do período selecionado no dashboard |
-| 📈 Gráficos | taxa de download/upload em Mbps em tempo real, consumo acumulado em GB no período |
+| SSH Security | failed attempts, unique attacking IPs, connections on port 22 (DDoS/scan), banned IPs (fail2ban), chart over time, top 10 IPs table |
+| Device Governance | hotspot / virtual networks / active SSH sessions count, hotspot table (MAC/IP/hostname), virtual networks table (network/IP/MAC/hostname/source), SSH sessions table (user/IP/TTY), combined history |
+| Consumption (GB) | total download/upload in the last 24h, gauges for the period selected on the dashboard |
+| Charts | real-time download/upload rate in Mbps, cumulative consumption in GB over the period |
 
-## Fontes de IP por categoria de dispositivo
+## IP sources by device category
 
-| Categoria | Fonte primária | Fallback |
+| Category | Primary source | Fallback |
 |---|---|---|
-| Hotspot | lease do dnsmasq | tabela ARP/vizinhos da interface (`ip neigh`) |
-| Bridges genéricas | tabela ARP/NDP (`ip neigh`) | — |
-| Libvirt/QEMU | `virsh net-dhcp-leases` (inclui hostname) | — |
-| Docker | `docker inspect` por container | — |
-| SSH | `who` (sessões autenticadas com host remoto) | — |
+| Hotspot | dnsmasq lease | interface ARP/neighbor table (`ip neigh`) |
+| Generic bridges | ARP/NDP table (`ip neigh`) | — |
+| Libvirt/QEMU | `virsh net-dhcp-leases` (includes hostname) | — |
+| Docker | `docker inspect` per container | — |
+| SSH | `who` (authenticated sessions with remote host) | — |
 
-## Ajustar sensibilidade de brute force/DDoS
+## Adjusting brute force/DDoS sensitivity
 
-Thresholds nos painéis de SSH:
-- Tentativas falhas: 5 min → alerta em 5, crítico em 15
-- Conexões na porta SSH: alerta em 30, crítico em 100
+Thresholds on the SSH panels:
+- Failed attempts: 5 min → warning at 5, critical at 15
+- Connections on SSH port: warning at 30, critical at 100
 
-Edite `thresholds.steps` no JSON ou pela UI (Edit panel → Thresholds)
-conforme o perfil de tráfego da sua rede.
+Edit `thresholds.steps` in the JSON or via the UI (Edit panel → Thresholds)
+according to your network's traffic profile.
